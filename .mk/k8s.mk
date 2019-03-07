@@ -15,16 +15,16 @@
 K8S_CONF_DIR = k8s/conf
 
 # Need nsmdp and icmp-responder-nse here as well, but missing yaml files
-DEPLOY_TRACING = jaeger
+DEPLOY_TRACING = # jaeger
 DEPLOY_WEBHOOK = admission-webhook
 DEPLOY_NSM = nsmd vppagent-dataplane
-DEPLOY_MONITOR = crossconnect-monitor skydive
+DEPLOY_MONITOR = # crossconnect-monitor skydive
 DEPLOY_INFRA = $(DEPLOY_TRACING) $(DEPLOY_WEBHOOK) $(DEPLOY_NSM) $(DEPLOY_MONITOR)
 DEPLOY_ICMP_KERNEL = icmp-responder-nse nsc
 DEPLOY_ICMP_VPP = vppagent-icmp-responder-nse vppagent-nsc
-DEPLOY_ICMP = $(DEPLOY_ICMP_KERNEL) $(DEPLOY_ICMP_VPP)
+DEPLOY_ICMP = $(DEPLOY_ICMP_KERNEL) # $(DEPLOY_ICMP_VPP)
 DEPLOY_VPN = secure-intranet-connectivity vppagent-firewall-nse vpn-gateway-nse vpn-gateway-nsc
-DEPLOYS = $(DEPLOY_INFRA) $(DEPLOY_ICMP) $(DEPLOY_VPN)
+DEPLOYS = $(DEPLOY_INFRA) $(DEPLOY_ICMP) # $(DEPLOY_VPN)
 
 CLUSTER_CONFIG_ROLE = cluster-role-admin cluster-role-binding cluster-role-view
 CLUSTER_CONFIG_CRD = crd-networkservices crd-networkserviceendpoints crd-networkservicemanagers

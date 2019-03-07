@@ -2,7 +2,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 spec:
-  replicas: 4
+  replicas: 1
   template:
     metadata:
       labels:
