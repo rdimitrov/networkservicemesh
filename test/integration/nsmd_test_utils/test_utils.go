@@ -32,7 +32,8 @@ type NodeConf struct {
 	Dataplane *v1.Pod
 	Node      *v1.Node
 }
-type PodSupplier = func(*kube_testing.K8s, *v1.Node, string, time.Duration, bool) *v1.Pod
+type PodSupplierIPvX = func(*kube_testing.K8s, *v1.Node, string, time.Duration, bool) *v1.Pod
+type PodSupplier = func(*kube_testing.K8s, *v1.Node, string, time.Duration) *v1.Pod
 type NscChecker = func(*kube_testing.K8s, *testing.T, *v1.Pod) *NSCCheckInfo
 
 func SetupNodes(k8s *kube_testing.K8s, nodesCount int, timeout time.Duration) []*NodeConf {

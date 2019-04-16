@@ -51,7 +51,7 @@ func TestDataplaneHealRemote(t *testing.T) {
 /**
 If passed 1 both will be on same node, if not on different.
 */
-func testDataplaneHeal(t *testing.T, nodesCount int, createNSC, createICMP nsmd_test_utils.PodSupplier, checkNsc nsmd_test_utils.NscChecker) {
+func testDataplaneHeal(t *testing.T, nodesCount int, createNSC nsmd_test_utils.PodSupplier, createICMP nsmd_test_utils.PodSupplierIPvX, checkNsc nsmd_test_utils.NscChecker) {
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()
 

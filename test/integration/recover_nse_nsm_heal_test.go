@@ -67,7 +67,6 @@ func TestNSMHealRemoteDieNSMD_NSE(t *testing.T) {
 	startTime := time.Now()
 	nodes_setup[1].Nsmd = k8s.CreatePod(pods.NSMgrPodWithConfig(nsmdName, nodes_setup[1].Node, &pods.NSMgrPodConfig{})) // Recovery NSEs
 	logrus.Printf("Started new NSMD: %v on node %s", time.Since(startTime), nodes_setup[1].Node.Name)
-	useIPv4 := true
 
 	failures = InterceptGomegaFailures(func() {
 		// Restore ICMP responder pod.
@@ -214,7 +213,7 @@ func TestNSMHealLocalDieNSMDOneNodeMemif(t *testing.T) {
 	testNSMHealLocalDieNSMDOneNode(t, nsmd_test_utils.DeployVppAgentNSC, nsmd_test_utils.DeployVppAgentICMP, nsmd_test_utils.CheckVppAgentNSC)
 }
 
-func testNSMHealLocalDieNSMDOneNode(t *testing.T, deployNsc, deployNse nsmd_test_utils.PodSupplier, nscCheck nsmd_test_utils.NscChecker) {
+func testNSMHealLocalDieNSMDOneNode(t *testing.T, deployNsc nsmd_test_utils.PodSupplier, deployNse nsmd_test_utils.PodSupplierIPvX, nscCheck nsmd_test_utils.NscChecker) {
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()
 
@@ -226,6 +225,7 @@ func testNSMHealLocalDieNSMDOneNode(t *testing.T, deployNsc, deployNse nsmd_test
 
 	// Deploy open tracing to see what happening.
 	nodes_setup := nsmd_test_utils.SetupNodes(k8s, 1, defaultTimeout)
+	useIPv4 := true
 
 	// Run ICMP on latest node
 	icmpPod := deployNse(k8s, nodes_setup[0].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
