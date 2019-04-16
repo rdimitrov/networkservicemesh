@@ -3,13 +3,14 @@
 package nsmd_integration_tests
 
 import (
+	"strconv"
+	"testing"
+
 	"github.com/networkservicemesh/networkservicemesh/test/integration/nsmd_test_utils"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing/pods"
 	. "github.com/onsi/gomega"
-	"k8s.io/api/core/v1"
-	"strconv"
-	"testing"
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -34,7 +35,9 @@ func TestBenchMemifOneTimeConnecting(t *testing.T) {
 	k8s.PrepareDefault()
 
 	node := createNode(k8s)
-	nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout)
+	useIPv4 := true
+
+	nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout, useIPv4)
 
 	doneChannel := make(chan nscPingResult, nscCount)
 	defer close(doneChannel)
@@ -64,8 +67,9 @@ func TestBenchMemifMovingConnection(t *testing.T) {
 	k8s.PrepareDefault()
 
 	node := createNode(k8s)
+	useIPv4 := true
 
-	nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout)
+	nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout, useIPv4)
 	doneChannel := make(chan nscPingResult, nscCount)
 	defer close(doneChannel)
 
@@ -96,11 +100,12 @@ func TestBenchMemifPerToPer(t *testing.T) {
 
 	k8s.PrepareDefault()
 	node := createNode(k8s)
+	useIPv4 := true
 	doneChannel := make(chan nscPingResult, 1)
 	defer close(doneChannel)
 
 	for testCount := 0; testCount < nscMaxCount; testCount += nscCount {
-		icmp := nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout)
+		icmp := nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout, useIPv4)
 		createNscAndPingIcmp(k8s, 1, node, doneChannel)
 		result := <-doneChannel
 		Expect(result.success).To(Equal(true))

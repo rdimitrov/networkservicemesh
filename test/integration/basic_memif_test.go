@@ -3,11 +3,12 @@
 package nsmd_integration_tests
 
 import (
+	"testing"
+
 	"github.com/networkservicemesh/networkservicemesh/test/integration/nsmd_test_utils"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing/pods"
 	. "github.com/onsi/gomega"
-	"testing"
 )
 
 func TestSimpleMemifConnection(t *testing.T) {
@@ -26,8 +27,9 @@ func TestSimpleMemifConnection(t *testing.T) {
 	k8s.PrepareDefault()
 
 	nodes := nsmd_test_utils.SetupNodesConfig(k8s, 1, defaultTimeout, []*pods.NSMgrPodConfig{})
+	useIPv4 := true
 
-	nsmd_test_utils.DeployVppAgentICMP(k8s, nodes[0].Node, "icmp-responder", defaultTimeout)
+	nsmd_test_utils.DeployVppAgentICMP(k8s, nodes[0].Node, "icmp-responder", defaultTimeout, useIPv4)
 	vppagentNsc := nsmd_test_utils.DeployVppAgentNSC(k8s, nodes[0].Node, "vppagent-nsc", defaultTimeout)
 	Expect(true, nsmd_test_utils.IsMemifNsePinged(k8s, vppagentNsc))
 }

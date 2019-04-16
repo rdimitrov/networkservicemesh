@@ -3,12 +3,13 @@
 package nsmd_integration_tests
 
 import (
+	"testing"
+	"time"
+
 	"github.com/networkservicemesh/networkservicemesh/test/integration/nsmd_test_utils"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing/pods"
 	. "github.com/onsi/gomega"
-	"testing"
-	"time"
 )
 
 func TestNSMDDP(t *testing.T) {
@@ -27,14 +28,16 @@ func TestNSMDDP(t *testing.T) {
 	k8s.PrepareDefault()
 
 	nodes := nsmd_test_utils.SetupNodesConfig(k8s, 1, defaultTimeout, []*pods.NSMgrPodConfig{})
-	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse-1", defaultTimeout)
+	useIPv4 := true
+
+	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 
 	nsmdName := nodes[0].Nsmd.Name
 	k8s.DeletePods(nodes[0].Nsmd)
 	k8s.DeletePods(icmpPod)
 	time.Sleep(10 * time.Second)
 	nodes[0].Nsmd = k8s.CreatePod(pods.NSMgrPodWithConfig(nsmdName, nodes[0].Node, &pods.NSMgrPodConfig{})) // Recovery NSEs
-	icmpPod = nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse-2", defaultTimeout)
+	icmpPod = nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse-2", defaultTimeout, useIPv4)
 	Expect(icmpPod).ToNot(BeNil())
 }
 
@@ -54,7 +57,9 @@ func TestNSMDRecoverNSE(t *testing.T) {
 	k8s.PrepareDefault()
 
 	nodes := nsmd_test_utils.SetupNodesConfig(k8s, 1, defaultTimeout, []*pods.NSMgrPodConfig{})
-	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse-1", defaultTimeout)
+	useIPv4 := true
+
+	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 
 	nsmdName := nodes[0].Nsmd.Name
 	k8s.DeletePods(nodes[0].Nsmd)
@@ -62,6 +67,6 @@ func TestNSMDRecoverNSE(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	nodes[0].Nsmd = k8s.CreatePod(pods.NSMgrPodWithConfig(nsmdName, nodes[0].Node, &pods.NSMgrPodConfig{})) // Recovery NSEs
-	icmpPod = nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse-2", defaultTimeout)
+	icmpPod = nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse-2", defaultTimeout, useIPv4)
 	Expect(icmpPod).ToNot(BeNil())
 }

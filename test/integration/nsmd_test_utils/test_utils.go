@@ -5,12 +5,13 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/networkservicemesh/networkservicemesh/controlplane/pkg/prefix_pool"
 	"net"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/networkservicemesh/networkservicemesh/controlplane/pkg/prefix_pool"
 
 	"k8s.io/client-go/util/cert"
 	"k8s.io/kubernetes/cmd/kubeadm/app/util/pkiutil"
@@ -31,7 +32,7 @@ type NodeConf struct {
 	Dataplane *v1.Pod
 	Node      *v1.Node
 }
-type PodSupplier = func(*kube_testing.K8s, *v1.Node, string, time.Duration) *v1.Pod
+type PodSupplier = func(*kube_testing.K8s, *v1.Node, string, time.Duration, bool) *v1.Pod
 type NscChecker = func(*kube_testing.K8s, *testing.T, *v1.Pod) *NSCCheckInfo
 
 func SetupNodes(k8s *kube_testing.K8s, nodesCount int, timeout time.Duration) []*NodeConf {
@@ -111,15 +112,15 @@ func deployNSMgrAndDataplane(k8s *kube_testing.K8s, node *v1.Node, corePods []*v
 	return
 }
 
-func DeployVppAgentICMP(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration) *v1.Pod {
+func DeployVppAgentICMP(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration, useIPv4 bool) *v1.Pod {
 	return deployICMP(k8s, node, name, timeout, pods.VppagentICMPResponderPod(name, node,
-		defaultICMPEnv(),
+		defaultICMPEnv(useIPv4),
 	))
 }
 
-func DeployICMP(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration) *v1.Pod {
+func DeployICMP(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration, useIPv4 bool) *v1.Pod {
 	return deployICMP(k8s, node, name, timeout, pods.ICMPResponderPod(name, node,
-		defaultICMPEnv(),
+		defaultICMPEnv(useIPv4),
 	))
 }
 
@@ -133,11 +134,19 @@ func DeployNSCWebghook(k8s *kube_testing.K8s, node *v1.Node, name string, timeou
 func DeployVppAgentNSC(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration) *v1.Pod {
 	return deployNSC(k8s, node, name, "vppagent-nsc", timeout, pods.VppagentNSC(name, node, defaultNSCEnv()))
 }
-func defaultICMPEnv() map[string]string {
-	return map[string]string{
-		"ADVERTISE_NSE_NAME":   "icmp-responder",
-		"ADVERTISE_NSE_LABELS": "app=icmp",
-		"IP_ADDRESS":           "10.20.1.0/24",
+func defaultICMPEnv(useIPv4 bool) map[string]string {
+	if useIPv4 {
+		return map[string]string{
+			"ADVERTISE_NSE_NAME":   "icmp-responder",
+			"ADVERTISE_NSE_LABELS": "app=icmp",
+			"IP_ADDRESS":           "10.20.1.0/24",
+		}
+	} else {
+		return map[string]string{
+			"ADVERTISE_NSE_NAME":   "icmp-responder",
+			"ADVERTISE_NSE_LABELS": "app=icmp",
+			"IP_ADDRESS":           "100::/64",
+		}
 	}
 }
 func defaultNSCEnv() map[string]string {

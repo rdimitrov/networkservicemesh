@@ -63,9 +63,10 @@ func testDataplaneHeal(t *testing.T, nodesCount int, createNSC, createICMP nsmd_
 
 	// Deploy open tracing to see what happening.
 	nodes_setup := nsmd_test_utils.SetupNodes(k8s, nodesCount, defaultTimeout)
+	useIPv4 := true
 
 	// Run ICMP on latest node
-	createICMP(k8s, nodes_setup[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout)
+	createICMP(k8s, nodes_setup[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 
 	nscPodNode := createNSC(k8s, nodes_setup[0].Node, "nsc-1", defaultTimeout)
 	var nscInfo *nsmd_test_utils.NSCCheckInfo

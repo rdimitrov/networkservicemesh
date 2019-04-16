@@ -3,9 +3,10 @@
 package nsmd_integration_tests
 
 import (
-	v1 "k8s.io/api/core/v1"
 	"testing"
 	"time"
+
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing/pods"
 
@@ -109,9 +110,10 @@ func testNSCAndICMP(t *testing.T, nodesCount int, useWebhook bool, disableVHost 
 		config = append(config, cfg)
 	}
 	nodes_setup := nsmd_test_utils.SetupNodesConfig(k8s, nodesCount, defaultTimeout, config)
+	useIPv4 := true
 
 	// Run ICMP on latest node
-	_ = nsmd_test_utils.DeployICMP(k8s, nodes_setup[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout)
+	_ = nsmd_test_utils.DeployICMP(k8s, nodes_setup[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 
 	var nscPodNode *v1.Pod
 	if useWebhook {

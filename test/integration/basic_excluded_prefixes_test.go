@@ -31,6 +31,7 @@ func TestExcludePrefixCheck(t *testing.T) {
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
 
 	nodesCount := 1
+	useIPv4 := true
 
 	variables := map[string]string{
 		nsmd.ExcludedPrefixesEnv: "10.20.1.0/24",
@@ -41,7 +42,7 @@ func TestExcludePrefixCheck(t *testing.T) {
 		},
 	})
 
-	icmp := nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse-1", defaultTimeout)
+	icmp := nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 
 	clientset, err := k8s.GetClientSet()
 	Expect(err).To(BeNil())

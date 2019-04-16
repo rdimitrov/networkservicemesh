@@ -34,9 +34,10 @@ func TestSingleCrossConnect(t *testing.T) {
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
 
 	nodesCount := 2
+	useIPv4 := true
 
 	nodes := nsmd_test_utils.SetupNodes(k8s, nodesCount, defaultTimeout)
-	nsmd_test_utils.DeployICMP(k8s, nodes[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout)
+	nsmd_test_utils.DeployICMP(k8s, nodes[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 	nsmd_test_utils.DeployNSC(k8s, nodes[0].Node, "nsc-1", defaultTimeout)
 
 	fwd, err := k8s.NewPortForwarder(nodes[0].Nsmd, 5001)
@@ -81,6 +82,7 @@ func TestSingleCrossConnectMonitorBeforeXcons(t *testing.T) {
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
 
 	nodesCount := 2
+	useIPv4 := true
 
 	nodes := nsmd_test_utils.SetupNodes(k8s, nodesCount, defaultTimeout)
 
@@ -103,7 +105,7 @@ func TestSingleCrossConnectMonitorBeforeXcons(t *testing.T) {
 	nsmdMonitor2, close2, cancel2 := createCrossConnectClient(fmt.Sprintf("localhost:%d", fwd2.ListenPort))
 	defer close2()
 
-	nsmd_test_utils.DeployICMP(k8s, nodes[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout)
+	nsmd_test_utils.DeployICMP(k8s, nodes[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 	nsmd_test_utils.DeployNSC(k8s, nodes[0].Node, "nsc-1", defaultTimeout)
 
 	_, err = getCrossConnectsFromMonitor(nsmdMonitor1, cancel1, 1, fastTimeout)
@@ -129,9 +131,10 @@ func TestSeveralCrossConnects(t *testing.T) {
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
 
 	nodesCount := 2
+	useIPv4 := true
 
 	nodes := nsmd_test_utils.SetupNodes(k8s, nodesCount, defaultTimeout)
-	nsmd_test_utils.DeployICMP(k8s, nodes[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout)
+	nsmd_test_utils.DeployICMP(k8s, nodes[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 	nsmd_test_utils.DeployNSC(k8s, nodes[0].Node, "nsc-1", defaultTimeout)
 	nsmd_test_utils.DeployNSC(k8s, nodes[0].Node, "nsc-2", defaultTimeout)
 
@@ -177,9 +180,10 @@ func TestCrossConnectMonitorRestart(t *testing.T) {
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
 
 	nodesCount := 2
+	useIPv4 := true
 
 	nodes := nsmd_test_utils.SetupNodes(k8s, nodesCount, defaultTimeout)
-	nsmd_test_utils.DeployICMP(k8s, nodes[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout)
+	nsmd_test_utils.DeployICMP(k8s, nodes[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 	nsmd_test_utils.DeployNSC(k8s, nodes[0].Node, "nsc-1", defaultTimeout)
 	nsmd_test_utils.DeployNSC(k8s, nodes[0].Node, "nsc-2", defaultTimeout)
 

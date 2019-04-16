@@ -62,9 +62,10 @@ func testNSEHeal(t *testing.T, nodesCount int, nscDeploy, icmpDeploy nsmd_test_u
 
 	// Deploy open tracing to see what happening.
 	nodes_setup := nsmd_test_utils.SetupNodes(k8s, nodesCount, defaultTimeout)
+	useIPv4 := true
 
 	// Run ICMP on latest node
-	nse1 := icmpDeploy(k8s, nodes_setup[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout)
+	nse1 := icmpDeploy(k8s, nodes_setup[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 
 	nscPodNode := nscDeploy(k8s, nodes_setup[0].Node, "nsc-1", defaultTimeout)
 	var nscInfo *nsmd_test_utils.NSCCheckInfo
