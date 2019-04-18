@@ -16,7 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func TestNSCAndICMPLocalIPv4(t *testing.T) {
+func TestNSCAndICMPLocal(t *testing.T) {
 	RegisterTestingT(t)
 
 	if testing.Short() {
@@ -24,10 +24,10 @@ func TestNSCAndICMPLocalIPv4(t *testing.T) {
 		return
 	}
 
-	testNSCAndICMP(t, 1, false, false, true)
+	testNSCAndICMP(t, 1, false, false)
 }
 
-func TestNSCAndICMPLocalIPv6(t *testing.T) {
+func TestNSCAndICMPRemote(t *testing.T) {
 	RegisterTestingT(t)
 
 	if testing.Short() {
@@ -35,10 +35,10 @@ func TestNSCAndICMPLocalIPv6(t *testing.T) {
 		return
 	}
 
-	testNSCAndICMP(t, 1, false, false, false)
+	testNSCAndICMP(t, 2, false, false)
 }
 
-func TestNSCAndICMPRemoteIPv4(t *testing.T) {
+func TestNSCAndICMPWebhookLocal(t *testing.T) {
 	RegisterTestingT(t)
 
 	if testing.Short() {
@@ -46,10 +46,10 @@ func TestNSCAndICMPRemoteIPv4(t *testing.T) {
 		return
 	}
 
-	testNSCAndICMP(t, 2, false, false, true)
+	testNSCAndICMP(t, 1, true, false)
 }
 
-func TestNSCAndICMPRemoteIPv6(t *testing.T) {
+func TestNSCAndICMPWebhookRemote(t *testing.T) {
 	RegisterTestingT(t)
 
 	if testing.Short() {
@@ -57,10 +57,10 @@ func TestNSCAndICMPRemoteIPv6(t *testing.T) {
 		return
 	}
 
-	testNSCAndICMP(t, 2, false, false, false)
+	testNSCAndICMP(t, 2, true, false)
 }
 
-func TestNSCAndICMPWebhookLocalIPv4(t *testing.T) {
+func TestNSCAndICMPLocalVeth(t *testing.T) {
 	RegisterTestingT(t)
 
 	if testing.Short() {
@@ -68,10 +68,10 @@ func TestNSCAndICMPWebhookLocalIPv4(t *testing.T) {
 		return
 	}
 
-	testNSCAndICMP(t, 1, true, false, true)
+	testNSCAndICMP(t, 1, false, true)
 }
 
-func TestNSCAndICMPWebhookLocalIPv6(t *testing.T) {
+func TestNSCAndICMPRemoteVeth(t *testing.T) {
 	RegisterTestingT(t)
 
 	if testing.Short() {
@@ -79,79 +79,13 @@ func TestNSCAndICMPWebhookLocalIPv6(t *testing.T) {
 		return
 	}
 
-	testNSCAndICMP(t, 1, true, false, false)
-}
-
-func TestNSCAndICMPWebhookRemoteIPv4(t *testing.T) {
-	RegisterTestingT(t)
-
-	if testing.Short() {
-		t.Skip("Skip, please run without -short")
-		return
-	}
-
-	testNSCAndICMP(t, 2, true, false, true)
-}
-
-func TestNSCAndICMPWebhookRemoteIPv6(t *testing.T) {
-	RegisterTestingT(t)
-
-	if testing.Short() {
-		t.Skip("Skip, please run without -short")
-		return
-	}
-
-	testNSCAndICMP(t, 2, true, false, false)
-}
-
-func TestNSCAndICMPLocalVethIPv4(t *testing.T) {
-	RegisterTestingT(t)
-
-	if testing.Short() {
-		t.Skip("Skip, please run without -short")
-		return
-	}
-
-	testNSCAndICMP(t, 1, false, true, true)
-}
-
-func TestNSCAndICMPLocalVethIPv6(t *testing.T) {
-	RegisterTestingT(t)
-
-	if testing.Short() {
-		t.Skip("Skip, please run without -short")
-		return
-	}
-
-	testNSCAndICMP(t, 1, false, true, false)
-}
-
-func TestNSCAndICMPRemoteVethIPv4(t *testing.T) {
-	RegisterTestingT(t)
-
-	if testing.Short() {
-		t.Skip("Skip, please run without -short")
-		return
-	}
-
-	testNSCAndICMP(t, 2, false, true, true)
-}
-
-func TestNSCAndICMPRemoteVethIPv6(t *testing.T) {
-	RegisterTestingT(t)
-
-	if testing.Short() {
-		t.Skip("Skip, please run without -short")
-		return
-	}
-
-	testNSCAndICMP(t, 2, false, true, false)
+	testNSCAndICMP(t, 2, false, true)
 }
 
 /**
 If passed 1 both will be on same node, if not on different.
 */
-func testNSCAndICMP(t *testing.T, nodesCount int, useWebhook bool, disableVHost bool, useIPv4 bool) {
+func testNSCAndICMP(t *testing.T, nodesCount int, useWebhook bool, disableVHost bool) {
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()
 
