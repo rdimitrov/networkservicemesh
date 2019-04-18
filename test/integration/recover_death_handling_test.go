@@ -75,15 +75,16 @@ func testDie(t *testing.T, killSrc bool, nodesCount int) {
 	defer k8s.Cleanup()
 	Expect(err).To(BeNil())
 
+	nsmd_test_utils.Init()
+
 	s1 := time.Now()
 	k8s.PrepareDefault()
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
 
 	nodes := nsmd_test_utils.SetupNodesConfig(k8s, nodesCount, defaultTimeout, []*pods.NSMgrPodConfig{NSENoHeal, NSENoHeal})
-	useIPv4 := true
 
 	failures := InterceptGomegaFailures(func() {
-		icmp := nsmd_test_utils.DeployICMP(k8s, nodes[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
+		icmp := nsmd_test_utils.DeployICMP(k8s, nodes[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout)
 		nsc := nsmd_test_utils.DeployNSC(k8s, nodes[0].Node, "nsc-1", defaultTimeout)
 
 		ipResponse, errOut, err := k8s.Exec(nsc, nsc.Spec.Containers[0].Name, "ip", "addr")

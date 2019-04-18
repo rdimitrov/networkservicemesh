@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -27,12 +28,17 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+var UseIPv6 bool = false
+
+const (
+	envUseIPv6 = "USE_IPV6"
+)
+
 type NodeConf struct {
 	Nsmd      *v1.Pod
 	Dataplane *v1.Pod
 	Node      *v1.Node
 }
-type PodSupplierIPvX = func(*kube_testing.K8s, *v1.Node, string, time.Duration, bool) *v1.Pod
 type PodSupplier = func(*kube_testing.K8s, *v1.Node, string, time.Duration) *v1.Pod
 type NscChecker = func(*kube_testing.K8s, *testing.T, *v1.Pod) *NSCCheckInfo
 
@@ -113,15 +119,15 @@ func deployNSMgrAndDataplane(k8s *kube_testing.K8s, node *v1.Node, corePods []*v
 	return
 }
 
-func DeployVppAgentICMP(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration, useIPv4 bool) *v1.Pod {
+func DeployVppAgentICMP(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration) *v1.Pod {
 	return deployICMP(k8s, node, name, timeout, pods.VppagentICMPResponderPod(name, node,
-		defaultICMPEnv(useIPv4),
+		defaultICMPEnv(),
 	))
 }
 
-func DeployICMP(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration, useIPv4 bool) *v1.Pod {
+func DeployICMP(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration) *v1.Pod {
 	return deployICMP(k8s, node, name, timeout, pods.ICMPResponderPod(name, node,
-		defaultICMPEnv(useIPv4),
+		defaultICMPEnv(),
 	))
 }
 
@@ -135,8 +141,8 @@ func DeployNSCWebhook(k8s *kube_testing.K8s, node *v1.Node, name string, timeout
 func DeployVppAgentNSC(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration) *v1.Pod {
 	return deployNSC(k8s, node, name, "vppagent-nsc", timeout, pods.VppagentNSC(name, node, defaultNSCEnv()))
 }
-func defaultICMPEnv(useIPv4 bool) map[string]string {
-	if useIPv4 {
+func defaultICMPEnv() map[string]string {
+	if !UseIPv6 {
 		return map[string]string{
 			"ADVERTISE_NSE_NAME":   "icmp-responder",
 			"ADVERTISE_NSE_LABELS": "app=icmp",
@@ -148,6 +154,15 @@ func defaultICMPEnv(useIPv4 bool) map[string]string {
 			"ADVERTISE_NSE_LABELS": "app=icmp",
 			"IP_ADDRESS":           "100::/64",
 		}
+	}
+}
+func Init() {
+	/* Choose whether or not to use IPv6 in testing */
+	useIPv6, ok := os.LookupEnv(envUseIPv6)
+	if !ok {
+		logrus.Infof("%s not set, using default %t", envUseIPv6, UseIPv6)
+	} else {
+		UseIPv6, _ = strconv.ParseBool(useIPv6)
 	}
 }
 func defaultNSCEnv() map[string]string {

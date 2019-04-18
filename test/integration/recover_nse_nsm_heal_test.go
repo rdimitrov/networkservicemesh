@@ -28,16 +28,17 @@ func TestNSMHealLocalDieNSMD(t *testing.T) {
 
 	Expect(err).To(BeNil())
 
+	nsmd_test_utils.Init()
+
 	s1 := time.Now()
 	k8s.PrepareDefault()
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
 
 	// Deploy open tracing to see what happening.
 	nodes_setup := nsmd_test_utils.SetupNodes(k8s, 2, defaultTimeout)
-	useIPv4 := true
 
 	// Run ICMP on latest node
-	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
+	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-1", defaultTimeout)
 	Expect(icmpPod).ToNot(BeNil())
 
 	nscPodNode := nsmd_test_utils.DeployNSC(k8s, nodes_setup[0].Node, "nsc-1", defaultTimeout)
@@ -91,11 +92,13 @@ func TestNSMHealLocalDieNSMDOneNodeMemif(t *testing.T) {
 	testNSMHealLocalDieNSMDOneNode(t, nsmd_test_utils.DeployVppAgentNSC, nsmd_test_utils.DeployVppAgentICMP, nsmd_test_utils.CheckVppAgentNSC)
 }
 
-func testNSMHealLocalDieNSMDOneNode(t *testing.T, deployNsc nsmd_test_utils.PodSupplier, deployNse nsmd_test_utils.PodSupplierIPvX, nscCheck nsmd_test_utils.NscChecker) {
+func testNSMHealLocalDieNSMDOneNode(t *testing.T, deployNsc, deployNse nsmd_test_utils.PodSupplier, nscCheck nsmd_test_utils.NscChecker) {
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()
 
 	Expect(err).To(BeNil())
+
+	nsmd_test_utils.Init()
 
 	s1 := time.Now()
 	k8s.PrepareDefault()
@@ -103,10 +106,9 @@ func testNSMHealLocalDieNSMDOneNode(t *testing.T, deployNsc nsmd_test_utils.PodS
 
 	// Deploy open tracing to see what happening.
 	nodes_setup := nsmd_test_utils.SetupNodes(k8s, 1, defaultTimeout)
-	useIPv4 := true
 
 	// Run ICMP on latest node
-	icmpPod := deployNse(k8s, nodes_setup[0].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
+	icmpPod := deployNse(k8s, nodes_setup[0].Node, "icmp-responder-nse-1", defaultTimeout)
 	Expect(icmpPod).ToNot(BeNil())
 
 	nscPodNode := deployNsc(k8s, nodes_setup[0].Node, "nsc-1", defaultTimeout)

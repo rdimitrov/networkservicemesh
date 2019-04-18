@@ -30,10 +30,12 @@ func TestNSMHealRemoteDieNSMD_NSE(t *testing.T) {
 
 	Expect(err).To(BeNil())
 
+	nsmd_test_utils.Init()
+
 	s1 := time.Now()
 	k8s.PrepareDefault()
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
-	useIPv4 := true
+
 	// Deploy open tracing to see what happening.
 	nodes_setup := nsmd_test_utils.SetupNodesConfig(k8s, 2, defaultTimeout, []*pods.NSMgrPodConfig{
 		{
@@ -44,7 +46,7 @@ func TestNSMHealRemoteDieNSMD_NSE(t *testing.T) {
 	})
 
 	// Run ICMP on latest node
-	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
+	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-1", defaultTimeout)
 
 	nscPodNode := nsmd_test_utils.DeployNSC(k8s, nodes_setup[0].Node, "nsc-1", defaultTimeout)
 	var nscInfo *nsmd_test_utils.NSCCheckInfo
@@ -70,7 +72,7 @@ func TestNSMHealRemoteDieNSMD_NSE(t *testing.T) {
 
 	failures = InterceptGomegaFailures(func() {
 		// Restore ICMP responder pod.
-		icmpPod = nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-2", defaultTimeout, useIPv4)
+		icmpPod = nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-2", defaultTimeout)
 
 		logrus.Infof("Waiting for connection recovery...")
 		k8s.WaitLogsContains(nodes_setup[0].Nsmd, "nsmd", "Heal: Connection recovered:", 60*time.Second)
@@ -94,15 +96,16 @@ func TestNSMHealRemoteDieNSMD(t *testing.T) {
 
 	Expect(err).To(BeNil())
 
+	nsmd_test_utils.Init()
+
 	s1 := time.Now()
 	k8s.PrepareDefault()
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
 
 	// Deploy open tracing to see what happening.
 	nodes_setup := nsmd_test_utils.SetupNodes(k8s, 2, defaultTimeout)
-	useIPv4 := true
 	// Run ICMP on latest node
-	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
+	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-1", defaultTimeout)
 	Expect(icmpPod).ToNot(BeNil())
 
 	nscPodNode := nsmd_test_utils.DeployNSC(k8s, nodes_setup[0].Node, "nsc-1", defaultTimeout)

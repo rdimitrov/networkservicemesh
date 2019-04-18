@@ -50,11 +50,13 @@ func TestNSEHealRemote(t *testing.T) {
 /**
 If passed 1 both will be on same node, if not on different.
 */
-func testNSEHeal(t *testing.T, nodesCount int, nscDeploy nsmd_test_utils.PodSupplier, icmpDeploy nsmd_test_utils.PodSupplierIPvX, nscCheck nsmd_test_utils.NscChecker) {
+func testNSEHeal(t *testing.T, nodesCount int, nscDeploy, icmpDeploy nsmd_test_utils.PodSupplier, nscCheck nsmd_test_utils.NscChecker) {
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()
 
 	Expect(err).To(BeNil())
+
+	nsmd_test_utils.Init()
 
 	s1 := time.Now()
 	k8s.PrepareDefault()
@@ -62,10 +64,9 @@ func testNSEHeal(t *testing.T, nodesCount int, nscDeploy nsmd_test_utils.PodSupp
 
 	// Deploy open tracing to see what happening.
 	nodes_setup := nsmd_test_utils.SetupNodes(k8s, nodesCount, defaultTimeout)
-	useIPv4 := true
 
 	// Run ICMP on latest node
-	nse1 := icmpDeploy(k8s, nodes_setup[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
+	nse1 := icmpDeploy(k8s, nodes_setup[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout)
 
 	nscPodNode := nscDeploy(k8s, nodes_setup[0].Node, "nsc-1", defaultTimeout)
 	var nscInfo *nsmd_test_utils.NSCCheckInfo
@@ -76,7 +77,7 @@ func testNSEHeal(t *testing.T, nodesCount int, nscDeploy nsmd_test_utils.PodSupp
 	nsmd_test_utils.PrintErrors(failures, k8s, nodes_setup, nscInfo, t)
 
 	// Since all is fine now, we need to add new ICMP responder and delete previous one.
-	icmpDeploy(k8s, nodes_setup[nodesCount-1].Node, "icmp-responder-nse-2", defaultTimeout, useIPv4)
+	icmpDeploy(k8s, nodes_setup[nodesCount-1].Node, "icmp-responder-nse-2", defaultTimeout)
 
 	logrus.Infof("Delete first NSE")
 	k8s.DeletePods(nse1)

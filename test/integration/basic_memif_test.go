@@ -19,6 +19,8 @@ func TestSimpleMemifConnection(t *testing.T) {
 		return
 	}
 
+	nsmd_test_utils.Init()
+
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()
 
@@ -27,9 +29,8 @@ func TestSimpleMemifConnection(t *testing.T) {
 	k8s.PrepareDefault()
 
 	nodes := nsmd_test_utils.SetupNodesConfig(k8s, 1, defaultTimeout, []*pods.NSMgrPodConfig{})
-	useIPv4 := true
 
-	nsmd_test_utils.DeployVppAgentICMP(k8s, nodes[0].Node, "icmp-responder", defaultTimeout, useIPv4)
+	nsmd_test_utils.DeployVppAgentICMP(k8s, nodes[0].Node, "icmp-responder", defaultTimeout)
 	vppagentNsc := nsmd_test_utils.DeployVppAgentNSC(k8s, nodes[0].Node, "vppagent-nsc", defaultTimeout)
 	Expect(true, nsmd_test_utils.IsMemifNsePinged(k8s, vppagentNsc))
 }

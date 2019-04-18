@@ -27,6 +27,8 @@ func TestBenchMemifOneTimeConnecting(t *testing.T) {
 		return
 	}
 
+	nsmd_test_utils.Init()
+
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()
 
@@ -35,9 +37,8 @@ func TestBenchMemifOneTimeConnecting(t *testing.T) {
 	k8s.PrepareDefault()
 
 	node := createNode(k8s)
-	useIPv4 := true
 
-	nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout, useIPv4)
+	nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout)
 
 	doneChannel := make(chan nscPingResult, nscCount)
 	defer close(doneChannel)
@@ -59,6 +60,8 @@ func TestBenchMemifMovingConnection(t *testing.T) {
 		return
 	}
 
+	nsmd_test_utils.Init()
+
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()
 
@@ -67,9 +70,8 @@ func TestBenchMemifMovingConnection(t *testing.T) {
 	k8s.PrepareDefault()
 
 	node := createNode(k8s)
-	useIPv4 := true
 
-	nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout, useIPv4)
+	nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout)
 	doneChannel := make(chan nscPingResult, nscCount)
 	defer close(doneChannel)
 
@@ -93,6 +95,8 @@ func TestBenchMemifPerToPer(t *testing.T) {
 		return
 	}
 
+	nsmd_test_utils.Init()
+
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()
 
@@ -100,12 +104,11 @@ func TestBenchMemifPerToPer(t *testing.T) {
 
 	k8s.PrepareDefault()
 	node := createNode(k8s)
-	useIPv4 := true
 	doneChannel := make(chan nscPingResult, 1)
 	defer close(doneChannel)
 
 	for testCount := 0; testCount < nscMaxCount; testCount += nscCount {
-		icmp := nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout, useIPv4)
+		icmp := nsmd_test_utils.DeployVppAgentICMP(k8s, node, icmpAgentName, defaultTimeout)
 		createNscAndPingIcmp(k8s, 1, node, doneChannel)
 		result := <-doneChannel
 		Expect(result.success).To(Equal(true))
