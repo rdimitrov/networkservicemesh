@@ -4,10 +4,11 @@ package nsmd_integration_tests
 
 import (
 	"fmt"
-	"github.com/networkservicemesh/networkservicemesh/controlplane/pkg/apis/nsm"
-	"github.com/networkservicemesh/networkservicemesh/test/kube_testing/pods"
 	"testing"
 	"time"
+
+	"github.com/networkservicemesh/networkservicemesh/controlplane/pkg/apis/nsm"
+	"github.com/networkservicemesh/networkservicemesh/test/kube_testing/pods"
 
 	"github.com/networkservicemesh/networkservicemesh/test/integration/nsmd_test_utils"
 
@@ -32,7 +33,7 @@ func TestNSMHealRemoteDieNSMD_NSE(t *testing.T) {
 	s1 := time.Now()
 	k8s.PrepareDefault()
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
-
+	useIPv4 := true
 	// Deploy open tracing to see what happening.
 	nodes_setup := nsmd_test_utils.SetupNodesConfig(k8s, 2, defaultTimeout, []*pods.NSMgrPodConfig{
 		{
@@ -43,7 +44,7 @@ func TestNSMHealRemoteDieNSMD_NSE(t *testing.T) {
 	})
 
 	// Run ICMP on latest node
-	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-1", defaultTimeout)
+	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 
 	nscPodNode := nsmd_test_utils.DeployNSC(k8s, nodes_setup[0].Node, "nsc-1", defaultTimeout)
 	var nscInfo *nsmd_test_utils.NSCCheckInfo
@@ -69,7 +70,7 @@ func TestNSMHealRemoteDieNSMD_NSE(t *testing.T) {
 
 	failures = InterceptGomegaFailures(func() {
 		// Restore ICMP responder pod.
-		icmpPod = nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-2", defaultTimeout)
+		icmpPod = nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-2", defaultTimeout, useIPv4)
 
 		logrus.Infof("Waiting for connection recovery...")
 		k8s.WaitLogsContains(nodes_setup[0].Nsmd, "nsmd", "Heal: Connection recovered:", 60*time.Second)
@@ -99,9 +100,9 @@ func TestNSMHealRemoteDieNSMD(t *testing.T) {
 
 	// Deploy open tracing to see what happening.
 	nodes_setup := nsmd_test_utils.SetupNodes(k8s, 2, defaultTimeout)
-
+	useIPv4 := true
 	// Run ICMP on latest node
-	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-1", defaultTimeout)
+	icmpPod := nsmd_test_utils.DeployICMP(k8s, nodes_setup[1].Node, "icmp-responder-nse-1", defaultTimeout, useIPv4)
 	Expect(icmpPod).ToNot(BeNil())
 
 	nscPodNode := nsmd_test_utils.DeployNSC(k8s, nodes_setup[0].Node, "nsc-1", defaultTimeout)
