@@ -50,7 +50,7 @@ func TestExcludePrefixCheck(t *testing.T) {
 		},
 	})
 
-	icmp := nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse-ipv4", defaultTimeout)
+	icmp := nsmd_test_utils.DeployICMP(k8s, nodes[0].Node, "icmp-responder-nse", defaultTimeout)
 
 	clientset, err := k8s.GetClientSet()
 	Expect(err).To(BeNil())
