@@ -64,6 +64,23 @@ func TestNetExtract1(t *testing.T) {
 	Expect(err).To(BeNil())
 }
 
+func TestNetExtract2(t *testing.T) {
+	RegisterTestingT(t)
+
+	pool, err := NewPrefixPool("100::/64")
+	Expect(err).To(BeNil())
+
+	srcIP, dstIP, requested, err := pool.Extract("c1", connectioncontext.IpFamily_IPV6)
+	Expect(err).To(BeNil())
+	Expect(requested).To(BeNil())
+
+	Expect(srcIP.String()).To(Equal("100::1/126"))
+	Expect(dstIP.String()).To(Equal("100::2/126"))
+
+	err = pool.Release("c1")
+	Expect(err).To(BeNil())
+}
+
 func TestExtract1(t *testing.T) {
 	RegisterTestingT(t)
 

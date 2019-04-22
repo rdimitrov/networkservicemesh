@@ -456,10 +456,18 @@ func (info *NSCCheckInfo) PrintLogs() {
 }
 
 func CheckNSC(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod) *NSCCheckInfo {
-	return checkNSCConfig(k8s, t, nscPodNode, "10.20.1.1", "10.20.1.2")
+	srcIP, dstIP := "10.20.1.1", "10.20.1.2"
+	if UseIPv6 {
+		srcIP, dstIP = "100::1", "100::2"
+	}
+	return checkNSCConfig(k8s, t, nscPodNode, srcIP, dstIP)
 }
 func CheckVppAgentNSC(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod) *NSCCheckInfo {
-	return checkVppAgentNSCConfig(k8s, t, nscPodNode, "10.20.1.1")
+	ipAddr := "10.20.1.1"
+	if UseIPv6 {
+		ipAddr = "100::1"
+	}
+	return checkVppAgentNSCConfig(k8s, t, nscPodNode, ipAddr)
 }
 func checkNSCConfig(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod, checkIP string, pingIP string) *NSCCheckInfo {
 	var err error
@@ -477,10 +485,20 @@ func checkNSCConfig(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod, che
 	Expect(info.errOut).To(Equal(""))
 	logrus.Printf("NSC Route status, Ok")
 
-	Expect(strings.Contains(info.routeResponse, "8.8.8.8")).To(Equal(true))
+	publicDNSAddress := "8.8.8.8"
+	if UseIPv6 {
+		publicDNSAddress = "2001:4860:4860::8888"
+	}
+	Expect(strings.Contains(info.routeResponse, publicDNSAddress)).To(Equal(true))
 	Expect(strings.Contains(info.routeResponse, "nsm")).To(Equal(true))
 
-	info.pingResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "ping", pingIP, "-A", "-c", "5")
+	pingCommand := "ping"
+	if UseIPv6 {
+		pingCommand = "ping6"
+	}
+
+	info.pingResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, pingCommand, pingIP, "-A", "-c", "5")
+
 	Expect(err).To(BeNil())
 	Expect(strings.Contains(info.pingResponse, "5 packets transmitted, 5 packets received, 0% packet loss")).To(Equal(true))
 	logrus.Printf("NSC Ping is success:%s", info.pingResponse)
