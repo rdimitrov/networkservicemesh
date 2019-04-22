@@ -43,9 +43,9 @@ type PodSupplier = func(*kube_testing.K8s, *v1.Node, string, time.Duration) *v1.
 type NscChecker = func(*kube_testing.K8s, *testing.T, *v1.Pod) *NSCCheckInfo
 
 func SetupNodes(k8s *kube_testing.K8s, nodesCount int, timeout time.Duration) []*NodeConf {
-	return SetupNodesConfig(k8s, nodesCount, timeout, []*pods.NSMgrPodConfig{})
+	return SetupNodesConfig(k8s, nodesCount, timeout, []*pods.NSMgrPodConfig{}, k8s.GetK8sNamespace())
 }
-func SetupNodesConfig(k8s *kube_testing.K8s, nodesCount int, timeout time.Duration, conf []*pods.NSMgrPodConfig) []*NodeConf {
+func SetupNodesConfig(k8s *kube_testing.K8s, nodesCount int, timeout time.Duration, conf []*pods.NSMgrPodConfig, namespace string) []*NodeConf {
 	nodes := k8s.GetNodesWait(nodesCount, timeout)
 	Expect(len(nodes) >= nodesCount).To(Equal(true),
 		"At least one Kubernetes node is required for this test")
@@ -60,9 +60,10 @@ func SetupNodesConfig(k8s *kube_testing.K8s, nodesCount int, timeout time.Durati
 		var dataplanePod *v1.Pod
 		debug := false
 		if i >= len(conf) {
-			corePod = pods.NSMgrPod(nsmdName, node)
+			corePod = pods.NSMgrPod(nsmdName, node, k8s.GetK8sNamespace())
 			dataplanePod = pods.VPPDataplanePod(dataplaneName, node)
 		} else {
+			conf[i].Namespace = namespace
 			if conf[i].Nsmd == pods.NSMgrContainerDebug || conf[i].NsmdK8s == pods.NSMgrContainerDebug || conf[i].NsmdP == pods.NSMgrContainerDebug {
 				debug = true
 			}

@@ -113,6 +113,9 @@ jobs:
       use_ipv6:
         type: string
         default: "false"
+      namespace:
+        type: string
+        default: "default"
     working_directory: /go/src/github.com/networkservicemesh/networkservicemesh
     docker:
       - image: circleci/golang
@@ -192,6 +195,7 @@ jobs:
       USE_IPV6: "<< parameters.use_ipv6 >>"
       KUBECONFIG: /home/circleci/project/data/kubeconfig
       GO111MODULE: "on"
+      NSM_NAMESPACE: "<< parameters.namespace >>"
 
   packet-destroy:
     docker:
@@ -458,6 +462,7 @@ workflows:
             - packet-deploy
       - integration-tests:
           name: "packet-test-basic-usecase"
+          namespace: "nsm-system-integration"
           cloud_provider: "packet"
           cluster_id: "1"
           test_tags: "basic usecase"
@@ -465,6 +470,7 @@ workflows:
             - packet-deploy-k8s-1
       - integration-tests:
           name: "packet-test-recover"
+          namespace: "nsm-system-integration"
           cloud_provider: "packet"
           cluster_id: "2"
           test_tags: "recover"
@@ -472,6 +478,7 @@ workflows:
             - packet-deploy-k8s-2
       - integration-tests:
           name: "packet-test-bench"
+          namespace: "nsm-system-integration"
           cloud_provider: "packet"
           cluster_id: "2"
           test_tags: "bench"

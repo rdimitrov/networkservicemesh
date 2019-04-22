@@ -81,7 +81,9 @@ func testDie(t *testing.T, killSrc bool, nodesCount int) {
 	k8s.PrepareDefault()
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
 
-	nodes := nsmd_test_utils.SetupNodesConfig(k8s, nodesCount, defaultTimeout, []*pods.NSMgrPodConfig{NSENoHeal, NSENoHeal})
+	NSENoHeal.Namespace = k8s.GetK8sNamespace()
+
+	nodes := nsmd_test_utils.SetupNodesConfig(k8s, nodesCount, defaultTimeout, []*pods.NSMgrPodConfig{NSENoHeal, NSENoHeal}, k8s.GetK8sNamespace())
 
 	failures := InterceptGomegaFailures(func() {
 		icmp := nsmd_test_utils.DeployICMP(k8s, nodes[nodesCount-1].Node, "icmp-responder-nse-1", defaultTimeout)
