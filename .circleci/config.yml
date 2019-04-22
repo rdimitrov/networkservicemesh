@@ -477,23 +477,14 @@ workflows:
           requires:
             - packet-deploy-k8s-2
       - integration-tests:
-          name: "packet-test-basic-usecase-ipv6"
+          name: "packet-test-usecase-ipv6"
           namespace: "nsm-system-integration"
           cloud_provider: "packet"
           cluster_id: "1"
-          test_tags: "basic usecase"
+          test_tags: "usecase"
           use_ipv6: "true"
           requires:
             - packet-deploy-k8s-1
-      - integration-tests:
-          name: "packet-test-recover-ipv6"
-          namespace: "nsm-system-integration"
-          cloud_provider: "packet"
-          cluster_id: "2"
-          test_tags: "recover"
-          use_ipv6: "true"
-          requires:
-            - packet-deploy-k8s-2
       - integration-tests:
           name: "packet-test-bench"
           namespace: "nsm-system-integration"
