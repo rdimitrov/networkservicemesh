@@ -110,6 +110,9 @@ jobs:
       gke_project_id:
         type: string
         default: "ci-management"
+      use_ipv6:
+        type: string
+        default: "false"
     working_directory: /go/src/github.com/networkservicemesh/networkservicemesh
     docker:
       - image: circleci/golang
@@ -186,6 +189,7 @@ jobs:
       PACKET_CLUSTER_ID: "<< parameters.cluster_id >>"
       CLUSTER_ID: "<< parameters.cluster_id >>"
       CLOUD_PROVIDER: "<< parameters.cloud_provider >>"
+      USE_IPV6: "<< parameters.use_ipv6 >>"
       KUBECONFIG: /home/circleci/project/data/kubeconfig
       GO111MODULE: "on"
 
