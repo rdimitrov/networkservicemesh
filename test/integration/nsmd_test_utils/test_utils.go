@@ -472,7 +472,11 @@ func CheckVppAgentNSC(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod) *
 func checkNSCConfig(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod, checkIP string, pingIP string) *NSCCheckInfo {
 	var err error
 	info := &NSCCheckInfo{}
-	info.ipResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "ip", "addr")
+	ipCommand := "ip"
+	if UseIPv6 {
+		ipCommand = "ip -6"
+	}
+	info.ipResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, ipCommand, "addr")
 	Expect(err).To(BeNil())
 	Expect(info.errOut).To(Equal(""))
 	logrus.Printf("NSC IP status Ok")
@@ -480,7 +484,7 @@ func checkNSCConfig(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod, che
 	Expect(strings.Contains(info.ipResponse, checkIP)).To(Equal(true))
 	Expect(strings.Contains(info.ipResponse, "nsm")).To(Equal(true))
 
-	info.routeResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "ip", "route")
+	info.routeResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, ipCommand, "route")
 	Expect(err).To(BeNil())
 	Expect(info.errOut).To(Equal(""))
 	logrus.Printf("NSC Route status, Ok")
