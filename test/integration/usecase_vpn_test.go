@@ -9,6 +9,7 @@ import (
 	"time"
 
 	nsapiv1 "github.com/networkservicemesh/networkservicemesh/k8s/pkg/apis/networkservice/v1"
+	"github.com/networkservicemesh/networkservicemesh/test/integration/nsmd_test_utils"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing/crds"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing/pods"
@@ -152,13 +153,30 @@ func testVPN(t *testing.T, nodesCount int, affinity map[string]int, verbose bool
 	s1 = time.Now()
 	node = affinity["vpn-gateway-nse-1"]
 	logrus.Infof("Starting VPN Gateway NSE on node: %d", node)
-	vpnGatewayPodNode := k8s.CreatePod(pods.VPNGatewayNSEPod("vpn-gateway-nse-1", &nodes[node],
-		map[string]string{
+
+	/* Configure related variables for IPv4 or IPv6 testing */
+	variables := map[string]string{
+		"ADVERTISE_NSE_NAME":   "secure-intranet-connectivity",
+		"ADVERTISE_NSE_LABELS": "app=vpn-gateway",
+		"IP_ADDRESS":           "10.60.1.0/24",
+	}
+	ipCommand := "ip"
+	pingCommand := "ping"
+	srcIP, dstIP := "10.60.1.1", "10.60.1.2"
+	publicDNSAddress := "8.8.8.8"
+	if nsmd_test_utils.UseIPv6 {
+		variables = map[string]string{
 			"ADVERTISE_NSE_NAME":   "secure-intranet-connectivity",
 			"ADVERTISE_NSE_LABELS": "app=vpn-gateway",
-			"IP_ADDRESS":           "10.60.1.0/24",
-		},
-	))
+			"IP_ADDRESS":           "100::/64",
+		}
+		ipCommand = "ip -6"
+		pingCommand = "ping6"
+		srcIP, dstIP = "100::1", "100::2"
+		publicDNSAddress = "2001:4860:4860::8888"
+	}
+
+	vpnGatewayPodNode := k8s.CreatePod(pods.VPNGatewayNSEPod("vpn-gateway-nse-1", &nodes[node], variables))
 	Expect(vpnGatewayPodNode.Name).To(Equal("vpn-gateway-nse-1"))
 
 	k8s.WaitLogsContains(vpnGatewayPodNode, "vpn-gateway", "NSE: channel has been successfully advertised, waiting for connection from NSM...", fastTimeout)
@@ -185,33 +203,33 @@ func testVPN(t *testing.T, nodesCount int, affinity map[string]int, verbose bool
 	var failures []string
 
 	failures = InterceptGomegaFailures(func() {
-		ipResponse, errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "ip", "addr")
+		ipResponse, errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, ipCommand, "addr")
 		Expect(err).To(BeNil())
 		Expect(errOut).To(Equal(""))
 		logrus.Printf("NSC IP status Ok")
 
-		Expect(strings.Contains(ipResponse, "10.60.1.1")).To(Equal(true))
+		Expect(strings.Contains(ipResponse, srcIP)).To(Equal(true))
 		Expect(strings.Contains(ipResponse, "nsm")).To(Equal(true))
 
-		routeResponse, errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "ip", "route")
+		routeResponse, errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, ipCommand, "route")
 		Expect(err).To(BeNil())
 		Expect(errOut).To(Equal(""))
 		logrus.Printf("NSC Route status, Ok")
 
-		Expect(strings.Contains(routeResponse, "8.8.8.8")).To(Equal(true))
+		Expect(strings.Contains(routeResponse, publicDNSAddress)).To(Equal(true))
 		Expect(strings.Contains(routeResponse, "nsm")).To(Equal(true))
 		for i := 1; i <= 1; i++ {
-			pingResponse, errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "ping", "10.60.1.2", "-A", "-c", "10")
+			pingResponse, errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, pingCommand, dstIP, "-A", "-c", "10")
 			Expect(err).To(BeNil())
 			Expect(strings.Contains(pingResponse, "10 packets received")).To(Equal(true))
 			logrus.Printf("VPN NSC Ping succeeded:%s", pingResponse)
 
-			_, wgetResponse, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "wget", "-O", "/dev/null", "--timeout", "3", "http://10.60.1.2:80")
+			_, wgetResponse, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "wget", "-O", "/dev/null", "--timeout", "3", "http://"+dstIP+":80")
 			Expect(err).To(BeNil())
 			Expect(strings.Contains(wgetResponse, "100% |***")).To(Equal(true))
 			logrus.Printf("%d VPN NSC wget request succeeded: %s", i, wgetResponse)
 
-			_, wgetResponse, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "wget", "-O", "/dev/null", "--timeout", "3", "http://10.60.1.2:8080")
+			_, wgetResponse, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "wget", "-O", "/dev/null", "--timeout", "3", "http://"+dstIP+":8080")
 			Expect(err).To(Not(BeNil()))
 			Expect(strings.Contains(wgetResponse, "download timed out")).To(Equal(true))
 			logrus.Printf("%d VPN NSC wget request succeeded: %s", i, wgetResponse)

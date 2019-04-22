@@ -149,12 +149,11 @@ func defaultICMPEnv() map[string]string {
 			"ADVERTISE_NSE_LABELS": "app=icmp",
 			"IP_ADDRESS":           "10.20.1.0/24",
 		}
-	} else {
-		return map[string]string{
-			"ADVERTISE_NSE_NAME":   "icmp-responder",
-			"ADVERTISE_NSE_LABELS": "app=icmp",
-			"IP_ADDRESS":           "100::/64",
-		}
+	}
+	return map[string]string{
+		"ADVERTISE_NSE_NAME":   "icmp-responder",
+		"ADVERTISE_NSE_LABELS": "app=icmp",
+		"IP_ADDRESS":           "100::/64",
 	}
 }
 func Init() {
