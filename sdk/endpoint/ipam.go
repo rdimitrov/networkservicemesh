@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -58,9 +57,9 @@ func (ice *IpamEndpoint) Request(ctx context.Context, request *networkservice.Ne
 		return nil, err
 	}
 
-	/* Quick way to determine whether the pool is IPv4 or IPv6 */
+	/* Determine whether the pool is IPv4 or IPv6 */
 	currentIPFamily := connectioncontext.IpFamily_IPV4
-	if strings.Contains(ice.prefixPool.GetPrefixes()[0], ":") {
+	if common.IsIPv6(ice.prefixPool.GetPrefixes()[0]) {
 		currentIPFamily = connectioncontext.IpFamily_IPV6
 	}
 
@@ -84,6 +83,13 @@ func (ice *IpamEndpoint) Request(ctx context.Context, request *networkservice.Ne
 		&connectioncontext.Route{
 			Prefix: "8.8.8.8/30",
 		},
+	}
+	if common.IsIPv6(ice.prefixPool.GetPrefixes()[0]) {
+		newConnection.Context.Routes = []*connectioncontext.Route{
+			&connectioncontext.Route{
+				Prefix: "2001:4860:4860::8888/126",
+			},
+		}
 	}
 	newConnection.Context.ExtraPrefixes = prefixes
 
