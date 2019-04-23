@@ -20,8 +20,6 @@ func TestNSMDDP(t *testing.T) {
 		return
 	}
 
-	nsmd_test_utils.Init()
-
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()
 
@@ -48,8 +46,6 @@ func TestNSMDRecoverNSE(t *testing.T) {
 		t.Skip("Skip, please run without -short")
 		return
 	}
-
-	nsmd_test_utils.Init()
 
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()

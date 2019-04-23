@@ -56,8 +56,6 @@ func testNSEHeal(t *testing.T, nodesCount int, nscDeploy, icmpDeploy nsmd_test_u
 
 	Expect(err).To(BeNil())
 
-	nsmd_test_utils.Init()
-
 	s1 := time.Now()
 	k8s.PrepareDefault()
 	logrus.Printf("Cleanup done: %v", time.Since(s1))

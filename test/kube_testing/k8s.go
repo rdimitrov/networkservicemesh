@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -30,6 +31,11 @@ const (
 	podDeleteTimeout = 15 * time.Second
 	podExecTimeout   = 1 * time.Minute
 	podGetLogTimeout = 1 * time.Minute
+)
+
+const (
+	envUseIPv6        = "USE_IPV6"
+	envUseIPv6Default = false
 )
 
 type PodDeployResult struct {
@@ -250,6 +256,7 @@ type K8s struct {
 	config             *rest.Config
 	roles              []nsmrbac.Role
 	namespace          string
+	UseIPv6            bool
 }
 
 func NewK8s() (*K8s, error) {
@@ -277,11 +284,23 @@ func NewK8sWithoutRoles() (*K8s, error) {
 	Expect(err).To(BeNil())
 
 	client.initNamespace()
+	client.setIPVersion()
 
 	client.versionedClientSet, err = versioned.NewForConfig(config)
 	Expect(err).To(BeNil())
 
 	return &client, nil
+}
+
+/* Choose whether or not to use IPv6 in testing */
+func (o *K8s) setIPVersion() {
+	useIPv6, ok := os.LookupEnv(envUseIPv6)
+	if !ok {
+		logrus.Infof("%s not set, using default %t", envUseIPv6, envUseIPv6Default)
+		o.UseIPv6 = envUseIPv6Default
+	} else {
+		o.UseIPv6, _ = strconv.ParseBool(useIPv6)
+	}
 }
 
 // Immediate deletion does not wait for confirmation that the running resource has been terminated.

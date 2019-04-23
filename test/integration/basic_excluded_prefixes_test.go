@@ -22,8 +22,6 @@ func TestExcludePrefixCheck(t *testing.T) {
 		return
 	}
 
-	nsmd_test_utils.Init()
-
 	k8s, err := kube_testing.NewK8s()
 	defer k8s.Cleanup()
 	Expect(err).To(BeNil())
@@ -38,7 +36,7 @@ func TestExcludePrefixCheck(t *testing.T) {
 		nsmd.ExcludedPrefixesEnv: "10.20.1.0/24",
 	}
 
-	if nsmd_test_utils.UseIPv6 {
+	if k8s.UseIPv6 {
 		variables = map[string]string{
 			nsmd.ExcludedPrefixesEnv: "100::/64",
 		}

@@ -28,8 +28,6 @@ func TestNSMHealLocalDieNSMD(t *testing.T) {
 
 	Expect(err).To(BeNil())
 
-	nsmd_test_utils.Init()
-
 	s1 := time.Now()
 	k8s.PrepareDefault()
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
@@ -97,8 +95,6 @@ func testNSMHealLocalDieNSMDOneNode(t *testing.T, deployNsc, deployNse nsmd_test
 	defer k8s.Cleanup()
 
 	Expect(err).To(BeNil())
-
-	nsmd_test_utils.Init()
 
 	s1 := time.Now()
 	k8s.PrepareDefault()

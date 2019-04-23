@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -26,12 +25,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-)
-
-var UseIPv6 bool = false
-
-const (
-	envUseIPv6 = "USE_IPV6"
 )
 
 type NodeConf struct {
@@ -122,13 +115,13 @@ func deployNSMgrAndDataplane(k8s *kube_testing.K8s, node *v1.Node, corePods []*v
 
 func DeployVppAgentICMP(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration) *v1.Pod {
 	return deployICMP(k8s, node, name, timeout, pods.VppagentICMPResponderPod(name, node,
-		defaultICMPEnv(),
+		defaultICMPEnv(k8s.UseIPv6),
 	))
 }
 
 func DeployICMP(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration) *v1.Pod {
 	return deployICMP(k8s, node, name, timeout, pods.ICMPResponderPod(name, node,
-		defaultICMPEnv(),
+		defaultICMPEnv(k8s.UseIPv6),
 	))
 }
 
@@ -142,7 +135,7 @@ func DeployNSCWebhook(k8s *kube_testing.K8s, node *v1.Node, name string, timeout
 func DeployVppAgentNSC(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration) *v1.Pod {
 	return deployNSC(k8s, node, name, "vppagent-nsc", timeout, pods.VppagentNSC(name, node, defaultNSCEnv()))
 }
-func defaultICMPEnv() map[string]string {
+func defaultICMPEnv(UseIPv6 bool) map[string]string {
 	if !UseIPv6 {
 		return map[string]string{
 			"ADVERTISE_NSE_NAME":   "icmp-responder",
@@ -156,15 +149,7 @@ func defaultICMPEnv() map[string]string {
 		"IP_ADDRESS":           "100::/64",
 	}
 }
-func Init() {
-	/* Choose whether or not to use IPv6 in testing */
-	useIPv6, ok := os.LookupEnv(envUseIPv6)
-	if !ok {
-		logrus.Infof("%s not set, using default %t", envUseIPv6, UseIPv6)
-	} else {
-		UseIPv6, _ = strconv.ParseBool(useIPv6)
-	}
-}
+
 func defaultNSCEnv() map[string]string {
 	return map[string]string{
 		"OUTGOING_NSC_LABELS": "app=icmp",
@@ -456,14 +441,14 @@ func (info *NSCCheckInfo) PrintLogs() {
 
 func CheckNSC(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod) *NSCCheckInfo {
 	srcIP, dstIP := "10.20.1.1", "10.20.1.2"
-	if UseIPv6 {
+	if k8s.UseIPv6 {
 		srcIP, dstIP = "100::1", "100::2"
 	}
 	return checkNSCConfig(k8s, t, nscPodNode, srcIP, dstIP)
 }
 func CheckVppAgentNSC(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod) *NSCCheckInfo {
 	ipAddr := "10.20.1.1"
-	if UseIPv6 {
+	if k8s.UseIPv6 {
 		ipAddr = "100::1"
 	}
 	return checkVppAgentNSCConfig(k8s, t, nscPodNode, ipAddr)
@@ -472,7 +457,7 @@ func checkNSCConfig(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod, che
 	var err error
 	info := &NSCCheckInfo{}
 	ipCommand := "ip"
-	if UseIPv6 {
+	if k8s.UseIPv6 {
 		ipCommand = "ip -6"
 	}
 	info.ipResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, ipCommand, "addr")
@@ -489,14 +474,14 @@ func checkNSCConfig(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod, che
 	logrus.Printf("NSC Route status, Ok")
 
 	publicDNSAddress := "8.8.8.8"
-	if UseIPv6 {
+	if k8s.UseIPv6 {
 		publicDNSAddress = "2001:4860:4860::8888"
 	}
 	Expect(strings.Contains(info.routeResponse, publicDNSAddress)).To(Equal(true))
 	Expect(strings.Contains(info.routeResponse, "nsm")).To(Equal(true))
 
 	pingCommand := "ping"
-	if UseIPv6 {
+	if k8s.UseIPv6 {
 		pingCommand = "ping6"
 	}
 

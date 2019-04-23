@@ -9,7 +9,6 @@ import (
 	"time"
 
 	nsapiv1 "github.com/networkservicemesh/networkservicemesh/k8s/pkg/apis/networkservice/v1"
-	"github.com/networkservicemesh/networkservicemesh/test/integration/nsmd_test_utils"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing/crds"
 	"github.com/networkservicemesh/networkservicemesh/test/kube_testing/pods"
@@ -164,7 +163,7 @@ func testVPN(t *testing.T, nodesCount int, affinity map[string]int, verbose bool
 	pingCommand := "ping"
 	srcIP, dstIP := "10.60.1.1", "10.60.1.2"
 	publicDNSAddress := "8.8.8.8"
-	if nsmd_test_utils.UseIPv6 {
+	if k8s.UseIPv6 {
 		variables = map[string]string{
 			"ADVERTISE_NSE_NAME":   "secure-intranet-connectivity",
 			"ADVERTISE_NSE_LABELS": "app=vpn-gateway",

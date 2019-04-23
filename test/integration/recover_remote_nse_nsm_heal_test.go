@@ -30,8 +30,6 @@ func TestNSMHealRemoteDieNSMD_NSE(t *testing.T) {
 
 	Expect(err).To(BeNil())
 
-	nsmd_test_utils.Init()
-
 	s1 := time.Now()
 	k8s.PrepareDefault()
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
@@ -99,8 +97,6 @@ func TestNSMHealRemoteDieNSMD(t *testing.T) {
 	defer k8s.Cleanup()
 
 	Expect(err).To(BeNil())
-
-	nsmd_test_utils.Init()
 
 	s1 := time.Now()
 	k8s.PrepareDefault()

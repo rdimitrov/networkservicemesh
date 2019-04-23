@@ -75,8 +75,6 @@ func testDie(t *testing.T, killSrc bool, nodesCount int) {
 	defer k8s.Cleanup()
 	Expect(err).To(BeNil())
 
-	nsmd_test_utils.Init()
-
 	s1 := time.Now()
 	k8s.PrepareDefault()
 	logrus.Printf("Cleanup done: %v", time.Since(s1))
