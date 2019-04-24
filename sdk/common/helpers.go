@@ -62,6 +62,5 @@ func MechanismFromString(mechanismName string) connection.MechanismType {
 
 /* Function to check whether an IP is IPv6 or IPv4 */
 func IsIPv6(address string) bool {
-	ip := net.ParseIP(address)
-	return ip != nil && strings.Count(address, ":") >= 2
+	return strings.Count(address, ":") >= 2
 }
