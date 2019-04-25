@@ -480,7 +480,7 @@ workflows:
           test_tags: "usecase"
           use_ipv6: "true"
           requires:
-            - packet-deploy-k8s-1
+            - packet-test-basic-usecase
       - integration-tests:
           name: "packet-test-bench"
           namespace: "nsm-system-integration"
