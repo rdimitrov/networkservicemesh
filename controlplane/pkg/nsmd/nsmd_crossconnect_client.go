@@ -21,7 +21,7 @@ import (
 
 	"github.com/networkservicemesh/networkservicemesh/controlplane/pkg/monitor/crossconnect_monitor"
 	"github.com/networkservicemesh/networkservicemesh/controlplane/pkg/monitor/remote_connection_monitor"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
@@ -179,7 +179,7 @@ func (client *NsmMonitorCrossConnectClient) dataplaneCrossConnectMonitor(datapla
 						client.xconManager.UpdateClientConnectionSrcStateDown(clientConnection)
 					}
 					if dst := xcon.GetLocalDestination(); dst != nil && dst.State == local_connection.State_DOWN {
-						client.xconManager.UpdateClientConnectionDstStateDown(clientConnection)
+						client.xconManager.UpdateClientConnectionDstStateDown(clientConnection, false)
 					}
 					clientConnection.Xcon = xcon
 					client.xconManager.UpdateClientConnection(clientConnection)
@@ -189,6 +189,9 @@ func (client *NsmMonitorCrossConnectClient) dataplaneCrossConnectMonitor(datapla
 				case crossconnect.CrossConnectEventType_INITIAL_STATE_TRANSFER:
 					client.crossConnectMonitor.Update(xcon)
 				}
+			}
+			if event.Metrics != nil {
+				client.crossConnectMonitor.HandleMetrics(event.Metrics)
 			}
 			if event.GetType() == crossconnect.CrossConnectEventType_INITIAL_STATE_TRANSFER {
 				connects := []*crossconnect.CrossConnect{}
@@ -234,8 +237,8 @@ func (client *NsmMonitorCrossConnectClient) remotePeerConnectionMonitor(remotePe
 				logrus.Errorf("NSM-PeerMonitor(%v) Uexpected error: %v", remotePeer.Name, err)
 				connections := client.xconManager.GetClientConnectionByRemote(remotePeer)
 				for _, c := range connections {
-					// Same as DST down case, we need to find another NSE to connect to.
-					client.xconManager.UpdateClientConnectionDstStateDown(c)
+					// Same as DST down case, we need to wait for same NSE and updated NSMD.
+					client.xconManager.UpdateClientConnectionDstStateDown(c, true)
 				}
 				return
 			}
@@ -251,8 +254,8 @@ func (client *NsmMonitorCrossConnectClient) remotePeerConnectionMonitor(remotePe
 					// DST connection is updated, we most probable need to re-programm our data plane.
 					client.xconManager.UpdateClientConnectionDstUpdated(clientConnection, remoteConnection)
 				case connection.ConnectionEventType_DELETE:
-					client.xconManager.UpdateClientConnectionDstStateDown(clientConnection)
-					//TODO: Local Connection should be informed about SRC connection is also down.
+					// DST is down, we need to choose new NSE in any case.
+					client.xconManager.UpdateClientConnectionDstStateDown(clientConnection, false)
 				}
 			}
 		}

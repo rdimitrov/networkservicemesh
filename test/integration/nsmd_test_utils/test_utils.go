@@ -64,6 +64,7 @@ func SetupNodesConfig(k8s *kube_testing.K8s, nodesCount int, timeout time.Durati
 				corePod = pods.NSMgrPod(nsmdName, node, k8s.GetK8sNamespace())
 				dataplanePod = pods.VPPDataplanePod(dataplaneName, node)
 			} else {
+				conf[i].Namespace = namespace
 				if conf[i].Nsmd == pods.NSMgrContainerDebug || conf[i].NsmdK8s == pods.NSMgrContainerDebug || conf[i].NsmdP == pods.NSMgrContainerDebug {
 					debug = true
 				}
@@ -132,6 +133,13 @@ func DeployICMP(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.
 	return deployICMP(k8s, node, name, timeout, pods.ICMPResponderPod(name, node,
 		defaultICMPEnv(k8s.UseIPv6),
 	))
+}
+func DeployICMPWithConfig(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration, gracePeriod int64) *v1.Pod {
+	pod := pods.ICMPResponderPod(name, node,
+		defaultICMPEnv(),
+	)
+	pod.Spec.TerminationGracePeriodSeconds = &gracePeriod
+	return deployICMP(k8s, node, name, timeout, pod )
 }
 
 func DeployNSC(k8s *kube_testing.K8s, node *v1.Node, name string, timeout time.Duration) *v1.Pod {
