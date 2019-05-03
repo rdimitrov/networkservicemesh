@@ -157,7 +157,7 @@ func defaultICMPEnv(UseIPv6 bool) map[string]string {
 		return map[string]string{
 			"ADVERTISE_NSE_NAME":   "icmp-responder",
 			"ADVERTISE_NSE_LABELS": "app=icmp",
-			"IP_ADDRESS":           "10.20.1.0/24",
+			"IP_ADDRESS":           "172.16.1.0/24",
 		}
 	}
 	return map[string]string{
@@ -457,14 +457,14 @@ func (info *NSCCheckInfo) PrintLogs() {
 }
 
 func CheckNSC(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod) *NSCCheckInfo {
-	srcIP, dstIP := "10.20.1.1", "10.20.1.2"
+	srcIP, dstIP := "172.16.1.1", "172.16.1.2"
 	if k8s.UseIPv6 {
 		srcIP, dstIP = "100::1", "100::2"
 	}
 	return checkNSCConfig(k8s, t, nscPodNode, srcIP, dstIP)
 }
 func CheckVppAgentNSC(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod) *NSCCheckInfo {
-	ipAddr := "10.20.1.1"
+	ipAddr := "172.16.1.1"
 	if k8s.UseIPv6 {
 		ipAddr = "100::1"
 	}

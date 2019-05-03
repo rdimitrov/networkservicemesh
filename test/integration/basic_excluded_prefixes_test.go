@@ -33,7 +33,7 @@ func TestExcludePrefixCheck(t *testing.T) {
 	nodesCount := 1
 
 	variables := map[string]string{
-		nsmd.ExcludedPrefixesEnv: "10.20.1.0/24",
+		nsmd.ExcludedPrefixesEnv:     "172.16.1.0/24",
 		nsmd.NsmdDeleteLocalRegistry: "true",
 	}
 
