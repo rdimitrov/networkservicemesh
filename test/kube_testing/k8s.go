@@ -227,7 +227,7 @@ func blockUntilPodWorking(client kubernetes.Interface, context context.Context, 
 				close(exists)
 				break
 			}
-			<- time.Tick(time.Millisecond * time.Duration(50))
+			<-time.Tick(time.Millisecond * time.Duration(50))
 		}
 	}()
 
@@ -257,14 +257,14 @@ type K8s struct {
 	UseIPv6            bool
 }
 
-func NewK8s() (*K8s, error) {
+func NewK8s(prepare bool) (*K8s, error) {
 
-	client, err := NewK8sWithoutRoles()
+	client, err := NewK8sWithoutRoles(prepare)
 	client.roles, _ = client.CreateRoles("admin", "view", "binding")
 	return client, err
 }
 
-func NewK8sWithoutRoles() (*K8s, error) {
+func NewK8sWithoutRoles(prepare bool) (*K8s, error) {
 
 	path := os.Getenv("KUBECONFIG")
 	if len(path) == 0 {
@@ -287,6 +287,18 @@ func NewK8sWithoutRoles() (*K8s, error) {
 	client.versionedClientSet, err = versioned.NewForConfig(config)
 	Expect(err).To(BeNil())
 
+	if prepare {
+		start := time.Now()
+		client.Prepare("nsmgr", "nsmd", "vppagent", "vpn", "icmp", "nsc", "source", "dest")
+		client.CleanupCRDs()
+		client.CleanupServices("nsm-admission-webhook-svc")
+		client.CleanupDeployments()
+		client.CleanupMutatingWebhookConfigurations()
+		client.CleanupSecrets("nsm-admission-webhook-certs")
+		client.CleanupConfigMaps()
+		_ = nsmrbac.DeleteAllRoles(client.clientset)
+		logrus.Printf("Cleanup done: %v", time.Since(start))
+	}
 	return &client, nil
 }
 
@@ -443,11 +455,6 @@ func (l *K8s) Cleanup() {
 	logrus.Infof("Cleanup time: %v", time.Since(st))
 }
 
-func (l *K8s) PrepareDefault() {
-	l.Prepare("nsmgr", "nsmd", "vppagent", "vpn", "icmp", "nsc", "source", "dest")
-	l.CleanupCRDs()
-}
-
 func (l *K8s) Prepare(noPods ...string) {
 	for _, podName := range noPods {
 		for _, lpod := range l.ListPods() {
@@ -532,7 +539,6 @@ func (l *K8s) DeletePodsForce(pods ...*v1.Pod) {
 		}
 	}
 }
-
 
 func (k8s *K8s) GetLogs(pod *v1.Pod, container string) (string, error) {
 	getLogsOpt := &v1.PodLogOptions{}
@@ -647,6 +653,12 @@ func (o *K8s) DeleteService(service *v1.Service, namespace string) error {
 	return o.clientset.CoreV1().Services(namespace).Delete(service.GetName(), &metaV1.DeleteOptions{})
 }
 
+func (o *K8s) CleanupServices(services ...string) {
+	for _, s := range services {
+		_ = o.clientset.CoreV1().Services(o.namespace).Delete(s, &metaV1.DeleteOptions{})
+	}
+}
+
 func (o *K8s) CreateDeployment(deployment *appsv1.Deployment, namespace string) (*appsv1.Deployment, error) {
 	d, err := o.clientset.AppsV1().Deployments(namespace).Create(deployment)
 	if err != nil {
@@ -658,6 +670,13 @@ func (o *K8s) CreateDeployment(deployment *appsv1.Deployment, namespace string) 
 
 func (o *K8s) DeleteDeployment(deployment *appsv1.Deployment, namespace string) error {
 	return o.clientset.AppsV1().Deployments(namespace).Delete(deployment.GetName(), &metaV1.DeleteOptions{})
+}
+
+func (o *K8s) CleanupDeployments() {
+	deployments, _ := o.clientset.AppsV1().Deployments(o.namespace).List(metaV1.ListOptions{})
+	for _, d := range deployments.Items {
+		_ = o.DeleteDeployment(&d, o.namespace)
+	}
 }
 
 func (o *K8s) CreateMutatingWebhookConfiguration(mutatingWebhookConf *arv1beta1.MutatingWebhookConfiguration) (*arv1beta1.MutatingWebhookConfiguration, error) {
@@ -673,6 +692,13 @@ func (o *K8s) DeleteMutatingWebhookConfiguration(mutatingWebhookConf *arv1beta1.
 	return o.clientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Delete(mutatingWebhookConf.GetName(), &metaV1.DeleteOptions{})
 }
 
+func (o *K8s) CleanupMutatingWebhookConfigurations() {
+	mwConfigs, _ := o.clientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().List(metaV1.ListOptions{})
+	for _, mwConfig := range mwConfigs.Items {
+		_ = o.DeleteMutatingWebhookConfiguration(&mwConfig)
+	}
+}
+
 func (o *K8s) CreateSecret(secret *v1.Secret, namespace string) (*v1.Secret, error) {
 	s, err := o.clientset.CoreV1().Secrets(namespace).Create(secret)
 	if err != nil {
@@ -684,6 +710,12 @@ func (o *K8s) CreateSecret(secret *v1.Secret, namespace string) (*v1.Secret, err
 
 func (o *K8s) DeleteSecret(name string, namespace string) error {
 	return o.clientset.CoreV1().Secrets(namespace).Delete(name, &metaV1.DeleteOptions{})
+}
+
+func (o *K8s) CleanupSecrets(secrets ...string) {
+	for _, s := range secrets {
+		_ = o.DeleteSecret(s, o.namespace)
+	}
 }
 
 func (o *K8s) IsPodReady(pod *v1.Pod) bool {
