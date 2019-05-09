@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/networkservicemesh/networkservicemesh/dataplane/vppagent/pkg/vppagent"
 	"net"
 	"os"
 	"strings"
@@ -62,7 +63,7 @@ func SetupNodesConfig(k8s *kube_testing.K8s, nodesCount int, timeout time.Durati
 			debug := false
 			if i >= len(conf) {
 				corePod = pods.NSMgrPod(nsmdName, node, k8s.GetK8sNamespace())
-				dataplanePod = pods.VPPDataplanePod(dataplaneName, node)
+				dataplanePod = pods.VPPDataplanePodConfig(dataplaneName, node, defaultDataplaneVariables())
 			} else {
 				conf[i].Namespace = namespace
 				if conf[i].Nsmd == pods.NSMgrContainerDebug || conf[i].NsmdK8s == pods.NSMgrContainerDebug || conf[i].NsmdP == pods.NSMgrContainerDebug {
@@ -473,12 +474,23 @@ func printDataplaneLogs(k8s *kube_testing.K8s, dataplane *v1.Pod, k int) {
 }
 
 func printNSMDLogs(k8s *kube_testing.K8s, nsmdPod *v1.Pod, k int) {
-	nsmdLogs, _ := k8s.GetLogs(nsmdPod, "nsmd")
-	logrus.Errorf("===================== NSMD %d output since test is failing %v\n=====================", k, nsmdLogs)
-	nsmdk8sLogs, _ := k8s.GetLogs(nsmdPod, "nsmd-k8s")
-	logrus.Errorf("===================== NSMD K8S %d output since test is failing %v\n=====================", k, nsmdk8sLogs)
-	nsmdpLogs, _ := k8s.GetLogs(nsmdPod, "nsmdp")
-	logrus.Errorf("===================== NSMD K8P %d output since test is failing %v\n=====================", k, nsmdpLogs)
+	nsmdUpdatedPod,err  := k8s.GetPod(nsmdPod)
+	if err != nil {
+		logrus.Errorf("Failed to update POD details %v", err)
+		return
+	}
+	for _, cs := range nsmdUpdatedPod.Status.ContainerStatuses {
+		containerLogs, _ := k8s.GetLogs(nsmdPod, cs.Name)
+		if cs.RestartCount > 0 {
+			prevLogs, _ := k8s.GetLogsWithOptions(nsmdPod, &v1.PodLogOptions{
+				Container: cs.Name,
+				Previous:  true,
+			})
+			logrus.Errorf("===================== %s %d previous output since test is failing %v\n=====================", strings.ToUpper(cs.Name), k, prevLogs)
+		}
+		logrus.Errorf("===================== %s %d output since test is failing %v\n=====================", strings.ToUpper(cs.Name), k, containerLogs)
+	}
+
 }
 
 type NSCCheckInfo struct {
@@ -489,6 +501,9 @@ type NSCCheckInfo struct {
 }
 
 func (info *NSCCheckInfo) PrintLogs() {
+	if info == nil {
+		return
+	}
 	logrus.Errorf("===================== NSC IP Addr %v\n=====================", info.ipResponse)
 	logrus.Errorf("===================== NSC IP Route %v\n=====================", info.routeResponse)
 	logrus.Errorf("===================== NSC IP PING %v\n=====================", info.pingResponse)
@@ -588,7 +603,11 @@ func IsBrokeTestsEnabled() bool {
 	_, ok := os.LookupEnv("BROKEN_TESTS_ENABLED")
 	return ok
 }
-
+func defaultDataplaneVariables() map[string]string {
+	return map[string]string{
+		vppagent.DataplaneMetricsCollectorEnabledKey: "false",
+	}
+}
 func GetVppAgentNSEAddr(k8s *kube_testing.K8s, nsc *v1.Pod) (net.IP, error) {
 	return getNSEAddr(k8s, nsc, parseVppAgentAddr, "vppctl", "show int addr")
 }
