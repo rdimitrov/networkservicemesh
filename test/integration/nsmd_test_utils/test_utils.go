@@ -512,42 +512,60 @@ func CheckVppAgentNSC(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod) *
 func checkNSCConfig(k8s *kube_testing.K8s, t *testing.T, nscPodNode *v1.Pod, checkIP string, pingIP string) *NSCCheckInfo {
 	var err error
 	info := &NSCCheckInfo{}
-	ipCommand := "ip"
-	if k8s.UseIPv6 {
-		ipCommand = "ip -6"
-	}
-	info.ipResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, ipCommand, "addr")
-	Expect(err).To(BeNil())
-	Expect(info.errOut).To(Equal(""))
-	logrus.Printf("NSC IP status Ok")
 
-	Expect(strings.Contains(info.ipResponse, checkIP)).To(Equal(true))
-	Expect(strings.Contains(info.ipResponse, "nsm")).To(Equal(true))
-
-	info.routeResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, ipCommand, "route")
-	Expect(err).To(BeNil())
-	Expect(info.errOut).To(Equal(""))
-	logrus.Printf("NSC Route status, Ok")
-
+	ipVersionSuffix := ""
+	pingCommand := "ping"
 	publicDNSAddress := "8.8.8.8"
 	if k8s.UseIPv6 {
+		ipVersionSuffix = "-6"
+		pingCommand = "ping6"
 		publicDNSAddress = "2001:4860:4860::8888"
 	}
-	Expect(strings.Contains(info.routeResponse, publicDNSAddress)).To(Equal(true))
-	Expect(strings.Contains(info.routeResponse, "nsm")).To(Equal(true))
 
-	pingCommand := "ping"
-	if k8s.UseIPv6 {
-		pingCommand = "ping6"
-	}
-
-	info.pingResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, pingCommand, pingIP, "-A", "-c", "5")
-
+	/* Check IP address */
+	info.ipResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "ip", ipVersionSuffix, "addr")
 	Expect(err).To(BeNil())
 	Expect(info.errOut).To(Equal(""))
-	Expect(strings.Contains(info.pingResponse, "100% packet loss")).To(Equal(false))
+	Expect(strings.Contains(info.ipResponse, checkIP)).To(Equal(true))
+	Expect(strings.Contains(info.ipResponse, "nsm")).To(Equal(true))
+	if err != nil || info.errOut != "" {
+		logrus.Println("NSC IP status, NOK")
+		logrus.Println("ipResponse:", info.ipResponse)
+		logrus.Println("err:", err)
+		logrus.Println("info.errOut:", info.errOut)
+	} else {
+		logrus.Println("NSC IP status, OK")
+	}
 
-	logrus.Printf("NSC Ping is success:%s", info.pingResponse)
+	/* Check route */
+	info.routeResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, "ip", ipVersionSuffix, "route")
+	Expect(err).To(BeNil())
+	Expect(info.errOut).To(Equal(""))
+	Expect(strings.Contains(info.routeResponse, publicDNSAddress)).To(Equal(true))
+	Expect(strings.Contains(info.routeResponse, "nsm")).To(Equal(true))
+	if err != nil || info.errOut != "" {
+		logrus.Println("NSC Route status, NOK")
+		logrus.Println("routeResponse:", info.routeResponse)
+		logrus.Println("err:", err)
+		logrus.Println("info.errOut:", info.errOut)
+	} else {
+		logrus.Println("NSC Route status, OK")
+	}
+
+	/* Check ping */
+	info.pingResponse, info.errOut, err = k8s.Exec(nscPodNode, nscPodNode.Spec.Containers[0].Name, pingCommand, pingIP, "-A", "-c", "5")
+	Expect(err).To(BeNil())
+	Expect(info.errOut).To(Equal(""))
+	pingNOK := strings.Contains(info.pingResponse, "100% packet loss")
+	Expect(pingNOK).To(Equal(false))
+	if err != nil || info.errOut != "" || pingNOK {
+		logrus.Printf("NSC Ping, NOK")
+		logrus.Println("pingResponse:", info.pingResponse)
+		logrus.Println("err:", err)
+		logrus.Println("info.errOut:", info.errOut)
+	} else {
+		logrus.Printf("NSC Ping, OK")
+	}
 	return info
 }
 
