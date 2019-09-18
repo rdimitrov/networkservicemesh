@@ -33,7 +33,7 @@ else ifeq (${FORWARDING_PLANE}, kernel)
 endif
 # Deployments - grouped
 # Need nsmdp and icmp-responder-nse here as well, but missing yaml files
-DEPLOY_NSM = nsmgr $(DEPLOY_FORWARDING_PLANE)
+DEPLOY_NSM = nsmgr $(DEPLOY_FORWARDING_PLANE) nsm-coredns nsm-monitor
 DEPLOY_PROXY_NSM = proxy-nsmgr
 DEPLOY_INFRA = $(DEPLOY_TRACING) $(DEPLOY_WEBHOOK) $(DEPLOY_NSM) $(DEPLOY_PROXY_NSM) $(DEPLOY_MONITOR)
 DEPLOYS = $(DEPLOY_INFRA) $(DEPLOY_ICMP) $(DEPLOY_VPN)
@@ -207,6 +207,9 @@ k8s-build: $(addsuffix -build,$(addprefix k8s-,$(DEPLOYS)))
 .PHONY: k8s-nsm-coredns-save
 k8s-nsm-coredns-save:  $(addsuffix -save,$(addprefix ${CONTAINER_BUILD_PREFIX}-,nsm-coredns))
 
+.PHONY: k8s-nsm-coredns-deploy
+k8s-nsm-coredns-deploy:
+
 .PHONY: k8s-jaeger-build
 k8s-jaeger-build:
 
@@ -323,6 +326,9 @@ k8s-nsm-monitor-build: ${CONTAINER_BUILD_PREFIX}-nsm-monitor-build
 
 .PHONY: k8s-nsm-monitor-save
 k8s-nsm-monitor-save: ${CONTAINER_BUILD_PREFIX}-nsm-monitor-save
+
+.PHONY: k8s-nsm-monitor-deploy
+k8s-nsm-monitor-deploy:
 
 .PHONY: k8s-icmp-responder-nse-build
 k8s-icmp-responder-nse-build: ${CONTAINER_BUILD_PREFIX}-test-common-build
