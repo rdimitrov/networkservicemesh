@@ -57,9 +57,7 @@ Will enable use of vendor folder to share go dependencies.
 Network Service Mesh provides a handy Vagrant setup for running a two node K8s cluster. Once you've done ```make k8s-save```, you can deploy to it with:
 
 ```bash
-make k8s-save
-make k8s-load-images
-make helm-install-nsm
+make k8s-deploy
 ```
 
 By default this will:
@@ -79,13 +77,13 @@ make k8s-check
 
 which will try pinging from NSCs to NSEs.
 
-You can remove the effects of helm-install-% with:
+You can remove the effects of k8s-deploy with:
 
 ```bash
-make helm-delete-%
+make k8s-delete
 ```
 
-As in the case with `save` and `build`, you can always do this for a particular component, like ```make helm-install-%``` or ```make helm-delete-%```.
+As in the case with `save` and `build`, you can always do this for a particular component, like ```make k8s-nsc-deploy``` or ```make k8s-nsc-delete```.
 
 ## Having more control over the deployment
 
@@ -111,28 +109,19 @@ source scripts/vagrant/env.sh
 
 Network Service Mesh consists of a number of system pods, which take care of service registration, provide the dataplane functionality, do monitoring and observability.
 
-Once you have configured your ```kubectl``` to the desired Kubernetes `master` (may or may not be set through Vagrant), you can initiate the NSM infrastructure deployment and deletion using 
-```bash 
-make k8s-save
-make k8s-load-images
-helm-install-nsm
-``` 
-and 
-```bash
-helm-delete-nsm
-```
+Once you have configured your ```kubectl``` to the desired Kubernetes `master` (may or may not be set through Vagrant), you can initiate the NSM infrastructure deployment and deletion using ```make k8s-infra-deploy``` and ```make k8s-infra-delete```.
 
 ### Deploying the ICMP example and testing it
 
 The project comes with a simple, ready to test ICMP example. It deploys a number of ICMP responder NSEs and connects NSCs to them. This shows same and cross-node communication and is good for visualising it with the provided monitoring tools.
 
-The commands to deploy and delete it are ```make helm-install-icmp``` and ```make helm-delete-icmp```. Checking the operability of the ICMP example is done through ```make k8s-check```
+The commands to deploy and delete it are ```make k8s-icmp-deploy``` and ```make k8s-icmp-delete```. Checking the operability of the ICMP example is done through ```make k8s-check```
 
 ### Deploying the VPN composed Network Service
 
 One of the big advantages on Network Service Mesh is NS composition, i.e. forming a complex service out of a number of simple NSEs. The project comes with an example that implements the "secure-intranet-connectivity" Network Service which connects together a simple ACL based packet filtering firewall and a simulated VPN gateway NSEs.
 
-Deploying it is done through ```make helm-install-vpn``` and to uninstall it - run ```make helm-delete-vpn```. Checking VPN's operability is done with ```make k8s-check```.
+Deploying it is done through ```make k8s-vpn-deploy``` and to uninstall it - run ```make k8s-vpn-delete```. Checking VPN's operability is done with ```make k8s-check```.
 
 ## Trigger the integration tests on your host
 
