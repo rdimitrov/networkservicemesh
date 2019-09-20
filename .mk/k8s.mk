@@ -15,9 +15,9 @@
 K8S_CONF_DIR = k8s/conf
 
 # Deployments - common
-DEPLOY_TRACING = jaeger
-DEPLOY_WEBHOOK = admission-webhook
-DEPLOY_MONITOR = crossconnect-monitor skydive
+DEPLOY_TRACING = # jaeger
+DEPLOY_WEBHOOK = admission-webhook nsm-coredns nsm-monitor
+DEPLOY_MONITOR = crossconnect-monitor # skydive
 DEPLOY_ICMP_KERNEL = icmp-responder-nse nsc
 DEPLOY_ICMP = $(DEPLOY_ICMP_KERNEL)
 # Set the configured forwarding plane
@@ -94,6 +94,12 @@ export ORG=$(CONTAINER_REPO)
 
 .PHONY: k8s-deploy
 k8s-deploy: k8s-delete $(addsuffix -deploy,$(addprefix k8s-,$(DEPLOYS)))
+
+.PHONY: k8s-nsm-coredns-deploy
+k8s-nsm-coredns-deploy:
+
+.PHONY: k8s-nsm-monitor-deploy
+k8s-nsm-monitor-deploy:
 
 .PHONY: k8s-infra-deploy
 k8s-infra-deploy: k8s-infra-delete $(addsuffix -deploy,$(addprefix k8s-,$(DEPLOY_INFRA)))
